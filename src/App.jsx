@@ -97,7 +97,7 @@ export default function ReportBuilder() {
   };
 
   useEffect(() => {
-    fetch("http://localhost:3005/auth-url")
+    fetch("https://report-builder-lake.vercel.app//auth-url")
       .then(res => res.json())
       .then(data => setAuthUrl(data.url));
   }, []);
@@ -106,7 +106,7 @@ export default function ReportBuilder() {
     const urlParams = new URLSearchParams(window.location.search);
     const code = urlParams.get("code");
     if (code && !accessToken) {
-      fetch(`http://localhost:3005/auth-callback?code=${code}`)
+      fetch(`https://report-builder-lake.vercel.app//auth-callback?code=${code}`)
         .then(res => res.json())
         .then(data => {
           setAccessToken(data.access_token);
