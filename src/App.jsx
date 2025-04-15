@@ -2,6 +2,9 @@ import React, { useState, useEffect } from "react";
 import jsPDF from "jspdf";
 import "jspdf-autotable";
 import * as XLSX from "xlsx";
+import { FaFilter } from "react-icons/fa";
+import SegmentModal from "./components/SegmentModal";
+import "./components/SegmentModal.css";
 
 export default function ReportBuilder() {
   const [rows, setRows] = useState([{ id: 1, label: "" }]);
@@ -14,6 +17,9 @@ export default function ReportBuilder() {
   const [availableDimensions, setAvailableDimensions] = useState([]);
   const [tableData, setTableData] = useState([]);
   const [notes, setNotes] = useState([{ id: 1, columns: [""] }]);
+  const [selectedSegment, setSelectedSegment] = useState(null);
+  const [showSegmentModal, setShowSegmentModal] = useState(false);
+  const [segments, setSegments] = useState([]);
   const operations = ["+", "-", "*", "/"];
 
   const handleAddNote = () => {
@@ -96,6 +102,11 @@ export default function ReportBuilder() {
     setRows(updatedRows);
   };
 
+  const handleFilterMetricBySegment = (metricData) => {
+    if (!selectedSegment) return metricData;
+    return metricData.filter(item => item.segmentId === selectedSegment.id);
+  };
+
   useEffect(() => {
     fetch("/api/auth-url")
       .then(res => res.json())
@@ -131,6 +142,18 @@ export default function ReportBuilder() {
         .then(data => {
           setAvailableMetrics(data.metrics?.map(m => m.apiName) || []);
           setAvailableDimensions(data.dimensions?.map(d => d.apiName) || []);
+        });
+    }
+  }, [selectedProperty, accessToken]);
+
+  useEffect(() => {
+    if (selectedProperty && accessToken) {
+      fetch(`https://analyticsdata.googleapis.com/v1beta/${selectedProperty}/segments`, {
+        headers: { Authorization: `Bearer ${accessToken}` }
+      })
+        .then(res => res.json())
+        .then(data => {
+          setSegments(data.segments || []);
         });
     }
   }, [selectedProperty, accessToken]);
@@ -288,23 +311,23 @@ export default function ReportBuilder() {
 
         <table border="1" cellPadding="6" style={{ marginTop: 16, borderCollapse: "collapse" }}>
           <thead>
-  <tr>
-    {["Label", "Colonne dinamiche", "Aggiungi colonna"].map((header, index) => (
-      <th key={`header-${index}`}>
-        <span
-          contentEditable
-          suppressContentEditableWarning
-          onBlur={(e) => {
-            // eventualmente aggiornabile se vuoi salvare i nomi personalizzati delle colonne
-          }}
-          style={{ display: 'inline-block', minWidth: '100px', borderBottom: '1px dashed #ccc', cursor: 'text' }}
-        >
-          {header}
-        </span>
-      </th>
-    ))}
-  </tr>
-</thead>
+            <tr>
+              {["Label", "Colonne dinamiche", "Aggiungi colonna"].map((header, index) => (
+                <th key={`header-${index}`}>
+                  <span
+                    contentEditable
+                    suppressContentEditableWarning
+                    onBlur={(e) => {
+                      // eventualmente aggiornabile se vuoi salvare i nomi personalizzati delle colonne
+                    }}
+                    style={{ display: 'inline-block', minWidth: '100px', borderBottom: '1px dashed #ccc', cursor: 'text' }}
+                  >
+                    {header}
+                  </span>
+                </th>
+              ))}
+            </tr>
+          </thead>
           <tbody>
             {rows.map((row, rowIndex) => (
               <tr key={row.id}>
@@ -321,15 +344,24 @@ export default function ReportBuilder() {
                     {(columns[rowIndex] || []).map((col, colIndex) => (
                       <div key={colIndex} style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                         {col.type === "metric" ? (
-                          <select
-                            value={col.metric}
-                            onChange={e => handleInputChange(rowIndex, colIndex, e.target.value, "metric")}
-                          >
-                            <option value="">--</option>
-                            {availableMetrics.map(m => (
-                              <option key={m} value={m}>{m}</option>
-                            ))}
-                          </select>
+                          <>
+                            <select
+                              value={col.metric}
+                              onChange={e => handleInputChange(rowIndex, colIndex, e.target.value, "metric")}
+                            >
+                              <option value="">--</option>
+                              {availableMetrics.map(m => (
+                                <option key={m} value={m}>{m}</option>
+                              ))}
+                            </select>
+                            <span
+                              style={{ marginLeft: 8, cursor: 'pointer' }}
+                              title="Filtra per segmento"
+                              onClick={() => setShowSegmentModal(true)}
+                            >
+                              <FaFilter />
+                            </span>
+                          </>
                         ) : col.type === "operation" ? (
                           <select
                             value={col.additional}
@@ -378,6 +410,18 @@ export default function ReportBuilder() {
         <button onClick={handleAddRow} style={{ marginTop: 8 }}>➕ Aggiungi riga</button>
       </div>
 
+      {showSegmentModal && (
+        <SegmentModal
+          segments={segments}
+          onSelect={(segment) => {
+            setSelectedSegment(segment);
+            setShowSegmentModal(false);
+          }}
+          onClose={() => setShowSegmentModal(false)}
+          selectedSegment={selectedSegment}
+        />
+      )}
+
       {tableData.length > 0 && (
         <div style={{ marginTop: 24 }}>
           <h3>📝 Dettagli del report</h3>
@@ -417,50 +461,47 @@ export default function ReportBuilder() {
               ))}
             </tbody>
           </table>
-
-          
         </div>
       )}
 
       <div style={{ marginTop: 24 }}>
-  <button onClick={handleGenerateReport}>📊 Genera Report</button>
-  <button
-    onClick={() => {
-      const doc = new jsPDF();
-      doc.text("Report Google Analytics", 14, 16);
+        <button onClick={handleGenerateReport}>📊 Genera Report</button>
+        <button
+          onClick={() => {
+            const doc = new jsPDF();
+            doc.text("Report Google Analytics", 14, 16);
 
-      const detailHeaders = notes[0].columns.map((_, i) => `Colonna ${i + 1}`);
-      const detailBody = notes.map(note => note.columns);
-      doc.autoTable({ head: [detailHeaders], body: detailBody, startY: 20 });
+            const detailHeaders = notes[0].columns.map((_, i) => `Colonna ${i + 1}`);
+            const detailBody = notes.map(note => note.columns);
+            doc.autoTable({ head: [detailHeaders], body: detailBody, startY: 20 });
 
-      const head = ["Label", "Valore"];
-      const body = tableData.map(r => [r.label, ...r.values]);
-      doc.autoTable({ head: [head], body, startY: doc.lastAutoTable.finalY + 10 });
+            const head = ["Label", "Valore"];
+            const body = tableData.map(r => [r.label, ...r.values]);
+            doc.autoTable({ head: [head], body, startY: doc.lastAutoTable.finalY + 10 });
 
-      doc.save("report_ga4.pdf");
-    }}
-    style={{ marginLeft: 12 }}
-  >📄 Esporta PDF</button>
-  <button
-    onClick={() => {
-      const wb = XLSX.utils.book_new();
-      const detailSheet = XLSX.utils.aoa_to_sheet([
-        notes[0].columns,
-        ...notes.map(note => note.columns)
-      ]);
-      XLSX.utils.book_append_sheet(wb, detailSheet, "Dettagli Report");
+            doc.save("report_ga4.pdf");
+          }}
+          style={{ marginLeft: 12 }}
+        >📄 Esporta PDF</button>
+        <button
+          onClick={() => {
+            const wb = XLSX.utils.book_new();
+            const detailSheet = XLSX.utils.aoa_to_sheet([
+              notes[0].columns,
+              ...notes.map(note => note.columns)
+            ]);
+            XLSX.utils.book_append_sheet(wb, detailSheet, "Dettagli Report");
 
-      const ws = XLSX.utils.aoa_to_sheet([
-        ["Label", "Valore"],
-        ...tableData.map(row => [row.label, ...row.values])
-      ]);
-      XLSX.utils.book_append_sheet(wb, ws, "Risultati Report");
-      XLSX.writeFile(wb, "report_ga4.xlsx");
-    }}
-    style={{ marginLeft: 12 }}
-  >📊 Esporta Excel</button>
-</div>
-
+            const ws = XLSX.utils.aoa_to_sheet([
+              ["Label", "Valore"],
+              ...tableData.map(row => [row.label, ...row.values])
+            ]);
+            XLSX.utils.book_append_sheet(wb, ws, "Risultati Report");
+            XLSX.writeFile(wb, "report_ga4.xlsx");
+          }}
+          style={{ marginLeft: 12 }}
+        >📊 Esporta Excel</button>
+      </div>
     </div>
   );
 }
