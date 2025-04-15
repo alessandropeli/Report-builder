@@ -318,15 +318,19 @@ export default function ReportBuilder() {
       });
   };
 
-  const renderSegmentModal = () => {
-    if (!showSegmentModal) return null;
+  return (
+    <div style={{ padding: 24 }}>
+      <h1>Generatore Report</h1>
 
-    return (
-      <div style={modalStyle.modal}>
-        <div style={modalStyle.content}>
-          <h3>Seleziona Segmento</h3>
-          {Array.isArray(segments) && segments.length > 0 ? (
-            <>
+      {!accessToken && authUrl && (
+        <a href={authUrl}><button>🔑 Connetti Google Analytics</button></a>
+      )}
+
+      {showSegmentModal && (
+        <div style={modalStyle.modal}>
+          <div style={modalStyle.content}>
+            <h3>Seleziona Segmento</h3>
+            {Array.isArray(segments) && segments.length > 0 ? (
               <select
                 style={modalStyle.select}
                 value={selectedSegment?.id || ""}
@@ -343,30 +347,17 @@ export default function ReportBuilder() {
                   </option>
                 ))}
               </select>
-              <p style={{fontSize: '0.8em', color: '#666'}}>
-                {segments.length} segmenti disponibili
-              </p>
-            </>
-          ) : (
-            <p>Nessun segmento disponibile</p>
-          )}
-          <button 
-            style={modalStyle.button}
-            onClick={() => setShowSegmentModal(false)}
-          >
-            Chiudi
-          </button>
+            ) : (
+              <p>Nessun segmento disponibile</p>
+            )}
+            <button 
+              style={modalStyle.button}
+              onClick={() => setShowSegmentModal(false)}
+            >
+              Chiudi
+            </button>
+          </div>
         </div>
-      </div>
-    );
-  };
-
-  return (
-    <div style={{ padding: 24 }}>
-      <h1>Generatore Report</h1>
-
-      {!accessToken && authUrl && (
-        <a href={authUrl}><button>🔑 Connetti Google Analytics</button></a>
       )}
 
       <div style={{ marginTop: 24 }}>
@@ -540,8 +531,6 @@ export default function ReportBuilder() {
         </table>
         <button onClick={handleAddRow} style={{ marginTop: 8 }}>➕ Aggiungi riga</button>
       </div>
-
-      {renderSegmentModal()}
 
       {tableData.length > 0 && (
         <div style={{ marginTop: 24 }}>
