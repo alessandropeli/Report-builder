@@ -177,29 +177,37 @@ export default function ReportBuilder() {
   }, [selectedProperty, accessToken]);
 
   const loadSegments = async () => {
-    if (!selectedProperty || !accessToken) return;
-    
+    if (!selectedProperty || !accessToken) {
+      console.error("Proprietà o token mancanti");
+      return;
+    }
+
     try {
-      const response = await fetch(`https://analyticsdata.googleapis.com/v1beta/${selectedProperty}/segments`, {
+      const url = `https://analyticsdata.googleapis.com/v1beta/${selectedProperty}/segments`;
+      console.log("Fetching segments from:", url);
+
+      const response = await fetch(url, {
         headers: { 
           Authorization: `Bearer ${accessToken}`,
           'Content-Type': 'application/json'
         }
       });
-      
+
       if (!response.ok) {
-        throw new Error(`API Error: ${response.status}`);
+        throw new Error(`Errore API: ${response.status} ${response.statusText}`);
       }
-      
+
       const data = await response.json();
       console.log("Segmenti ricevuti:", data);
-      
+
       if (data.segments) {
         const fetchedSegments = data.segments.map(segment => ({
           id: segment.segmentId || segment.name,
           name: segment.displayName || segment.name
         }));
         setSegments(fetchedSegments);
+      } else {
+        setSegments([]);
       }
     } catch (err) {
       console.error("Errore caricamento segmenti:", err);
