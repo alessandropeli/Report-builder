@@ -148,17 +148,26 @@ export default function ReportBuilder() {
 
   useEffect(() => {
     if (selectedProperty && accessToken) {
+      console.log("Caricamento segmenti per la proprietà:", selectedProperty);
       fetch(`https://analyticsdata.googleapis.com/v1beta/${selectedProperty}/segments`, {
         headers: { Authorization: `Bearer ${accessToken}` }
       })
-        .then(res => res.json())
+        .then(res => {
+          if (!res.ok) {
+            throw new Error(`Errore API: ${res.status} ${res.statusText}`);
+          }
+          return res.json();
+        })
         .then(data => {
+          console.log("Risposta API segmenti:", data); // Log della risposta
           const fetchedSegments = data.segments?.map(segment => ({
             id: segment.segmentId,
             name: segment.displayName
           })) || [];
+          console.log("Segmenti mappati:", fetchedSegments); // Log dei segmenti mappati
           setSegments(fetchedSegments);
-        });
+        })
+        .catch(err => console.error("Errore nel caricamento dei segmenti:", err)); // Log degli errori
     }
   }, [selectedProperty, accessToken]);
 
