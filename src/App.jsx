@@ -419,7 +419,25 @@ export default function ReportBuilder() {
           }}
           onClose={() => setShowSegmentModal(false)}
           selectedSegment={selectedSegment}
-        />
+        >
+          <div style={{ marginTop: 16 }}>
+            <label>Seleziona Segmento:</label>
+            <select
+              value={selectedSegment?.id || ""}
+              onChange={(e) => {
+                const selected = segments.find(seg => seg.id === e.target.value);
+                setSelectedSegment(selected);
+              }}
+            >
+              <option value="">--</option>
+              {segments.map(segment => (
+                <option key={segment.id} value={segment.id}>
+                  {segment.name}
+                </option>
+              ))}
+            </select>
+          </div>
+        </SegmentModal>
       )}
 
       {tableData.length > 0 && (
