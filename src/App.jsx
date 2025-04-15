@@ -326,22 +326,27 @@ export default function ReportBuilder() {
         <div style={modalStyle.content}>
           <h3>Seleziona Segmento</h3>
           {Array.isArray(segments) && segments.length > 0 ? (
-            <select
-              style={modalStyle.select}
-              value={selectedSegment?.id || ""}
-              onChange={(e) => {
-                const selected = segments.find(seg => seg.id === e.target.value);
-                setSelectedSegment(selected);
-                setShowSegmentModal(false);
-              }}
-            >
-              <option value="">-- Seleziona un segmento --</option>
-              {segments.map(segment => (
-                <option key={segment.id} value={segment.id}>
-                  {segment.name}
-                </option>
-              ))}
-            </select>
+            <>
+              <select
+                style={modalStyle.select}
+                value={selectedSegment?.id || ""}
+                onChange={(e) => {
+                  const selected = segments.find(seg => seg.id === e.target.value);
+                  setSelectedSegment(selected);
+                  setShowSegmentModal(false);
+                }}
+              >
+                <option value="">-- Seleziona un segmento --</option>
+                {segments.map(segment => (
+                  <option key={segment.id} value={segment.id}>
+                    {segment.name}
+                  </option>
+                ))}
+              </select>
+              <p style={{fontSize: '0.8em', color: '#666'}}>
+                {segments.length} segmenti disponibili
+              </p>
+            </>
           ) : (
             <p>Nessun segmento disponibile</p>
           )}
