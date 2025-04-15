@@ -3,8 +3,6 @@ import jsPDF from "jspdf";
 import "jspdf-autotable";
 import * as XLSX from "xlsx";
 import { FaFilter } from "react-icons/fa";
-import SegmentModal from "./components/SegmentModal";
-import "./components/SegmentModal.css";
 
 export default function ReportBuilder() {
   const [rows, setRows] = useState([{ id: 1, label: "" }]);
@@ -21,6 +19,38 @@ export default function ReportBuilder() {
   const [showSegmentModal, setShowSegmentModal] = useState(false);
   const [segments, setSegments] = useState([]);
   const operations = ["+", "-", "*", "/"];
+
+  const modalStyle = {
+    modal: {
+      position: 'fixed',
+      top: 0,
+      left: 0,
+      width: '100%',
+      height: '100%',
+      backgroundColor: 'rgba(0, 0, 0, 0.5)',
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+      zIndex: 1000
+    },
+    content: {
+      backgroundColor: 'white',
+      padding: '20px',
+      borderRadius: '8px',
+      minWidth: '300px'
+    },
+    select: {
+      width: '100%',
+      padding: '8px',
+      marginTop: '10px',
+      marginBottom: '10px'
+    },
+    button: {
+      width: '100%',
+      padding: '8px',
+      marginTop: '10px'
+    }
+  };
 
   const handleAddNote = () => {
     setNotes(prev => [...prev, { id: prev.length + 1, columns: [""] }]);
@@ -288,6 +318,44 @@ export default function ReportBuilder() {
       });
   };
 
+  const renderSegmentModal = () => {
+    if (!showSegmentModal) return null;
+
+    return (
+      <div style={modalStyle.modal}>
+        <div style={modalStyle.content}>
+          <h3>Seleziona Segmento</h3>
+          {Array.isArray(segments) && segments.length > 0 ? (
+            <select
+              style={modalStyle.select}
+              value={selectedSegment?.id || ""}
+              onChange={(e) => {
+                const selected = segments.find(seg => seg.id === e.target.value);
+                setSelectedSegment(selected);
+                setShowSegmentModal(false);
+              }}
+            >
+              <option value="">-- Seleziona un segmento --</option>
+              {segments.map(segment => (
+                <option key={segment.id} value={segment.id}>
+                  {segment.name}
+                </option>
+              ))}
+            </select>
+          ) : (
+            <p>Nessun segmento disponibile</p>
+          )}
+          <button 
+            style={modalStyle.button}
+            onClick={() => setShowSegmentModal(false)}
+          >
+            Chiudi
+          </button>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div style={{ padding: 24 }}>
       <h1>Generatore Report</h1>
@@ -468,17 +536,7 @@ export default function ReportBuilder() {
         <button onClick={handleAddRow} style={{ marginTop: 8 }}>➕ Aggiungi riga</button>
       </div>
 
-      {showSegmentModal && (
-        <SegmentModal
-          segments={segments}
-          onSelect={(segment) => {
-            setSelectedSegment(segment);
-            setShowSegmentModal(false);
-          }}
-          onClose={() => setShowSegmentModal(false)}
-          selectedSegment={selectedSegment}
-        />
-      )}
+      {renderSegmentModal()}
 
       {tableData.length > 0 && (
         <div style={{ marginTop: 24 }}>
