@@ -148,26 +148,35 @@ export default function ReportBuilder() {
 
   useEffect(() => {
     if (selectedProperty && accessToken) {
-      console.log("Caricamento segmenti per la proprietà:", selectedProperty);
+      console.log("Fetching segments for property:", selectedProperty);
       fetch(`https://analyticsdata.googleapis.com/v1beta/${selectedProperty}/segments`, {
-        headers: { Authorization: `Bearer ${accessToken}` }
+        headers: { 
+          Authorization: `Bearer ${accessToken}`,
+          'Content-Type': 'application/json'
+        }
       })
         .then(res => {
+          console.log("Segment API response status:", res.status);
           if (!res.ok) {
-            throw new Error(`Errore API: ${res.status} ${res.statusText}`);
+            throw new Error(`API Error: ${res.status} ${res.statusText}`);
           }
           return res.json();
         })
         .then(data => {
-          console.log("Risposta API segmenti:", data); // Log della risposta
-          const fetchedSegments = data.segments?.map(segment => ({
-            id: segment.segmentId,
-            name: segment.displayName
-          })) || [];
-          console.log("Segmenti mappati:", fetchedSegments); // Log dei segmenti mappati
-          setSegments(fetchedSegments);
+          console.log("Segments API response:", data);
+          if (data.segments) {
+            const fetchedSegments = data.segments.map(segment => ({
+              id: segment.segmentId || segment.name,
+              name: segment.displayName || segment.name
+            }));
+            console.log("Processed segments:", fetchedSegments);
+            setSegments(fetchedSegments);
+          }
         })
-        .catch(err => console.error("Errore nel caricamento dei segmenti:", err)); // Log degli errori
+        .catch(err => {
+          console.error("Error loading segments:", err);
+          setSegments([]); // Reset segments on error
+        });
     }
   }, [selectedProperty, accessToken]);
 
