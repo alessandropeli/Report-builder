@@ -97,7 +97,7 @@ export default function ReportBuilder() {
   };
 
   useEffect(() => {
-    fetch("/api/auth-url/auth-url")
+    fetch("/api/auth-url")
       .then(res => res.json())
       .then(data => setAuthUrl(data.url));
   }, []);
