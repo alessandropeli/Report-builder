@@ -217,11 +217,19 @@ export default function ReportBuilder() {
       console.log("Proprietà o token mancanti");
       return;
     }
-    
+
     try {
       // Carica i segmenti
       await loadSegments();
-      // Imposta direttamente showSegmentModal a true
+
+      // Verifica se i segmenti sono stati caricati correttamente
+      if (segments.length === 0) {
+        console.log("Nessun segmento disponibile");
+      } else {
+        console.log("Segmenti caricati:", segments);
+      }
+
+      // Mostra la modale
       setShowSegmentModal(true);
     } catch (err) {
       console.error("Errore caricamento segmenti:", err);
