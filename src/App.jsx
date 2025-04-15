@@ -153,7 +153,11 @@ export default function ReportBuilder() {
       })
         .then(res => res.json())
         .then(data => {
-          setSegments(data.segments || []);
+          const fetchedSegments = data.segments?.map(segment => ({
+            id: segment.segmentId,
+            name: segment.displayName
+          })) || [];
+          setSegments(fetchedSegments);
         });
     }
   }, [selectedProperty, accessToken]);

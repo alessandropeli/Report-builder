@@ -12,7 +12,7 @@ export default function SegmentModal({ segments, onSelect, onClose, selectedSegm
             onSelect(selected);
           }}
         >
-          <option value="">--</option>
+          <option value="">-- Seleziona un segmento --</option>
           {segments.map(segment => (
             <option key={segment.id} value={segment.id}>
               {segment.name}
