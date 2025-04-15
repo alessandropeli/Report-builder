@@ -182,6 +182,40 @@ export default function ReportBuilder() {
     setShowSegmentModal(true);
   };
 
+  const handleSegmentFilter = async () => {
+    if (!selectedProperty || !accessToken) {
+      console.log("Proprietà o token mancanti");
+      return;
+    }
+    
+    try {
+      const response = await fetch(`https://analyticsdata.googleapis.com/v1beta/${selectedProperty}/segments`, {
+        headers: { 
+          Authorization: `Bearer ${accessToken}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Errore API: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      console.log("Dati segmenti:", data);
+      
+      if (data.segments) {
+        const fetchedSegments = data.segments.map(segment => ({
+          id: segment.segmentId || segment.name,
+          name: segment.displayName || segment.name
+        }));
+        setSegments(fetchedSegments);
+        setShowSegmentModal(true);
+      }
+    } catch (err) {
+      console.error("Errore caricamento segmenti:", err);
+    }
+  };
+
   const handleGenerateReport = () => {
     const flatMetrics = columns.flatMap(rowCols =>
       rowCols.filter(col => col.type === "metric" && col.metric).map(col => col.metric)
@@ -381,7 +415,7 @@ export default function ReportBuilder() {
                             <span
                               style={{ marginLeft: 8, cursor: 'pointer' }}
                               title="Filtra per segmento"
-                              onClick={handleOpenSegmentModal}
+                              onClick={handleSegmentFilter}
                             >
                               <FaFilter />
                             </span>
