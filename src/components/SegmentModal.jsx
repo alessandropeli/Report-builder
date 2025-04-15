@@ -1,30 +1,26 @@
 import React from "react";
 
-const SegmentModal = ({ segments, onSelect, onClose, selectedSegment }) => {
+export default function SegmentModal({ segments, onSelect, onClose, selectedSegment }) {
   return (
-    <div className="modal-overlay">
+    <div className="modal">
       <div className="modal-content">
-        <h3>Seleziona un segmento</h3>
-        <ul>
+        <h3>Seleziona Segmento</h3>
+        <select
+          value={selectedSegment?.id || ""}
+          onChange={(e) => {
+            const selected = segments.find(seg => seg.id === e.target.value);
+            onSelect(selected);
+          }}
+        >
+          <option value="">--</option>
           {segments.map(segment => (
-            <li key={segment.id}>
-              <button
-                style={{
-                  fontWeight: selectedSegment?.id === segment.id ? "bold" : "normal"
-                }}
-                onClick={() => onSelect(segment)}
-              >
-                {segment.name}
-              </button>
-            </li>
+            <option key={segment.id} value={segment.id}>
+              {segment.name}
+            </option>
           ))}
-        </ul>
-        <button onClick={onClose} style={{ marginTop: "16px" }}>
-          Chiudi
-        </button>
+        </select>
+        <button onClick={onClose} style={{ marginTop: 16 }}>Chiudi</button>
       </div>
     </div>
   );
-};
-
-export default SegmentModal;
+}
